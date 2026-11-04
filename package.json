@@ -8,12 +8,17 @@
     "scan": "node scanner/scan.js",
     "health": "node scanner/scan.js --health",
     "test": "node --test test/*.test.js",
-    "start": "node scanner/scan.js"
+    "start": "node scanner/scan.js",
+    "cex:health": "node scanner/cex.js"
   },
   "dependencies": {
+    "ccxt": "4.5.91",
     "ethers": "6.17.0"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.18.1"
+  },
+  "overrides": {
+    "undici": "7.30.1"
   }
 }

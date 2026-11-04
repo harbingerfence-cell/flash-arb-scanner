@@ -1,5 +1,23 @@
 # Codex handoff to Claude
 
+## Follow-up: 50 centralized exchanges, monitoring only
+
+The user expanded scope to all 50 listed exchanges and explicitly confirmed
+monitoring only. Added `scanner/exchanges.js` (ordered registry),
+`scanner/cex-adapters.js` (39 CCXT and 11 native public adapters), and
+`scanner/cex.js` (background monitoring, depth comparisons, fee/freshness guards,
+status and CSV). Integrated the watchlist into the same process and HTTP status
+page, with `/markets.json`, `/cex.csv`, and `npm run cex:health`.
+
+`test/cex.test.js` expands the suite to 21 passing tests. The final live sweep
+attempted all 50; 43 had fresh books at completion. Availability failures are
+explicit and retried. See `CEX_MONITORING.md` for precise market coverage, external
+restrictions, source documentation, configuration, and validation limits.
+
+Dependency additions: pinned ccxt 4.5.91 and patched undici 7.30.1 override;
+Node minimum is now 20.18.1. Audit: zero known vulnerabilities. This remains
+read-only and does not deploy Railway, fund accounts, or submit trades.
+
 User authorized improvements to the existing scanner and requested an identifiable
 handoff. This work is isolated on `codex/quote-integrity-and-simulation`, based on
 `6c60b905c295823a9b673a859ab2ef55e341e677`. Commits use the `[Codex]` prefix.

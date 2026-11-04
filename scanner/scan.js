@@ -1,3 +1,4 @@
+const {createMonitor}=require('./cex');
 const fs = require('fs');
 const path = require('path');
 const {ethers} = require('ethers');
@@ -57,9 +58,11 @@ async function main() {
   ensureCsv(cfg.CSV_PATH);
   const started=Date.now();
   const stats={scans:0,errors:0,profitable:0,simulatedPositive:0,simulationFailed:0,firstBlock:0,lastBlock:0,bestNet:null,bestSpread:null,byRoute:{},byToken:{}};
-  const finish=()=>{writeSummary(stats,started);process.exit(0);};
+  const monitor=createMonitor();
+  const finish=()=>{monitor.stop();writeSummary(stats,started);process.exit(0);};
   process.on('SIGINT',finish);process.on('SIGTERM',finish);
-  startLive(provider,stats,started);
+  startLive(provider,stats,started,monitor);
+  if(monitor.config.enabled) monitor.start();
   await refreshTokens(provider);
   console.log(`Read-only scan: ${cfg.tokenList().length} tokens, ${cfg.VENUES.length} venues. Simulation ${cfg.EXECUTOR_ADDRESS?'enabled':'disabled (set EXECUTOR_ADDRESS)'}.`);
   let lastScanned=0, tokenCursor=0;

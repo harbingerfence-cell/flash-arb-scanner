@@ -41,3 +41,20 @@ a Railway volume at the chosen results directory if logs must survive restarts.
 
 See [CODEX_CHANGES.md](CODEX_CHANGES.md) for the implementation handoff to Claude,
 validation evidence, and work still needed before live trading.
+
+## All 50 centralized exchanges: monitoring only
+
+The same `npm start` process also monitors the user's 50-exchange watchlist through
+public spot order books. Initial market coverage is BTC and ETH, using each venue's
+local quote currency. It runs in the background so slow exchange APIs do not block
+Base scans. No API keys, balances, orders, withdrawals, or automatic trading are used.
+
+The existing status page includes all 50 feed statuses and top depth comparisons.
+`/markets.json` provides the current watchlist, market status, bid/ask, age, and
+comparisons. `/cex.csv` downloads up to 20 positive-gross observations recorded per
+completed cycle. `npm run cex:health` runs a single public-data sweep without Base RPC.
+
+Read [CEX_MONITORING.md](CEX_MONITORING.md) for coverage, configuration, data-source
+references, validation, and availability limits. All 50 are configured; a regional
+restriction, upstream outage, or unavailable market remains explicitly visible and
+is retried on later cycles. This is not a claim that all 50 feeds are always healthy.
