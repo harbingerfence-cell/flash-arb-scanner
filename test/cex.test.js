@@ -37,6 +37,26 @@ test('shared HTTP status report includes the CEX watchlist and JSON without trad
     assert.match(text,/Centralized exchange monitoring/);assert.match(text,/50\. Bit2Me/);
   } finally {await new Promise(resolve=>server.close(resolve));}
 });
+test('existing database dashboard and CSV remain available alongside the CEX monitor',async()=>{
+  const {createStatusServer}=require('../scanner/live');
+  let flushed=0;
+  const database={enabled:()=>true,flush:async()=>flushed++,history:async()=>({hours:[],recent:[],totals:{n:0,usd:0,best:0}}),
+    allOpportunities:async()=>[{time:new Date(0),token:'TEST',net_usd:1}]};
+  const monitor=createMonitor({config,adapters:EXCHANGES.map(e=>({...e,fetchBook:async()=>raw})),append:()=>{},log:()=>{}});
+  const server=createStatusServer({scans:0,errors:0,profitable:0,byToken:{},byRoute:{}},Date.now(),monitor,{database});
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  try {
+    const root=`http://127.0.0.1:${server.address().port}`;
+    const response=await fetch(root);const html=await response.text();
+    assert.match(response.headers.get('content-type'),/text\/html/);
+    assert.match(html,/Base Arb Scanner/);assert.match(html,/50\. Bit2Me/);assert.equal(flushed,1);
+    const csv=await (await fetch(root+'/csv')).text();assert.match(csv,/TEST/);
+    const text=await (await fetch(root+'/text')).text();assert.match(text,/Centralized exchange monitoring/);
+    database.history=async()=>{throw new Error('credential-bearing upstream failure');};
+    const failure=await fetch(root);assert.equal(failure.status,500);
+    assert.doesNotMatch(await failure.text(),/credential/);
+  } finally {await new Promise(resolve=>server.close(resolve));}
+});
 test('depth pricing walks levels and rejects insufficient liquidity',()=>{
   assert.equal(quoteBase(raw.asks,3),304);
   assert.equal(quoteBase(raw.asks,6),null);

@@ -80,10 +80,11 @@ snapshots. Vendor references used during implementation:
 
 ## Validation and limits
 
-21 tests passed, covering the original DEX work plus registry coverage, eleven
+22 tests passed, covering the original DEX work plus registry coverage, eleven
 native response formats, public-only adapter calls, depth calculations, exact quote
 matching, unknown fees, freshness/skew, failure isolation, concurrent-cycle guard,
-zero-size levels, configuration checks, and the shared HTTP text/JSON endpoints.
+zero-size levels, configuration checks, shared HTTP text/JSON endpoints, and
+preservation of the newer database-backed dashboard, historical CSV, and `/text`.
 
 The last full live sweep attempted all 100 selected markets and completed in 19.8
 seconds. 43 of 50 exchanges had at least one fresh usable book at completion.

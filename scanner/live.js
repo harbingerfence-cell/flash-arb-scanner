@@ -6,6 +6,8 @@ const {quoteMany}=require('./multicall');
 const {discoverTokens}=require('./discover');
 const {summaryText}=require('./summary');
 const {monitorText}=require('./cex');
+const db=require('./db');
+const {renderPage}=require('./page');
 async function refreshTokens(provider) {
   if(cfg.DISCOVER_MAX<=0) return;
   cfg.EXTRA_TOKENS=await discoverTokens({weth:cfg.WETH,exclude:Object.values(cfg.TOKENS),
@@ -27,8 +29,9 @@ function sendCsv(res,file) {
   res.setHeader('content-type','text/csv');
   fs.createReadStream(file).on('error',()=>{res.statusCode=404;res.end('No observations recorded');}).pipe(res);
 }
-function createStatusServer(stats,started,monitor) {
-  return http.createServer((req,res)=>{
+function createStatusServer(stats,started,monitor,{database=db}={}) {
+  return http.createServer(async(req,res)=>{
+    try {
     res.setHeader('cache-control','no-store');
     const url=new URL(req.url,'http://localhost');
     if(url.pathname==='/markets.json') {
@@ -36,9 +39,25 @@ function createStatusServer(stats,started,monitor) {
       return res.end(JSON.stringify(monitor?.snapshot()||{mode:'monitor_only',enabled:false}));
     }
     if(url.pathname==='/cex.csv') return sendCsv(res,monitor?.config.csvPath||'results/cex-observations.csv');
-    if(url.pathname==='/csv') return sendCsv(res,cfg.CSV_PATH);
+    if(url.pathname==='/csv') {
+      if(!database.enabled()) return sendCsv(res,cfg.CSV_PATH);
+      const rows=await database.allOpportunities();
+      const columns=['time','block','token','size_eth','buy_on','sell_on','spread_pct','net_eth','net_usd'];
+      const cell=v=>'"'+String(v instanceof Date?v.toISOString():v??'').replace(/"/g,'""')+'"';
+      res.setHeader('content-type','text/csv');
+      return res.end([columns.join(','),...rows.map(r=>columns.map(c=>cell(r[c])).join(','))].join('\n')+'\n');
+    }
+    const live=summaryText(stats,started)+monitorText(monitor)+`Tokens: ${cfg.tokenList().map(t=>t.sym).join(', ')}\nDEX quote observations: /csv\n`;
+    if(url.pathname!=='/text'&&database.enabled()) {
+      await database.flush();
+      res.setHeader('content-type','text/html; charset=utf-8');
+      return res.end(renderPage(await database.history(7),live));
+    }
     res.setHeader('content-type','text/plain; charset=utf-8');
-    res.end(summaryText(stats,started)+monitorText(monitor)+`Tokens: ${cfg.tokenList().map(t=>t.sym).join(', ')}\nDEX quote observations: /csv\n`);
+    res.end(live);
+    } catch {
+      res.statusCode=500;res.end('Status history unavailable; check service logs');
+    }
   });
 }
 function startLive(provider,stats,started,monitor) {

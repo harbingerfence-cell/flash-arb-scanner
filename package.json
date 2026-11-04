@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "ccxt": "4.5.91",
-    "ethers": "6.17.0"
+    "ethers": "6.17.0",
+    "pg": "8.13.1"
   },
   "engines": {
     "node": ">=20.18.1"

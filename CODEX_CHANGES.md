@@ -9,7 +9,7 @@ monitoring only. Added `scanner/exchanges.js` (ordered registry),
 status and CSV). Integrated the watchlist into the same process and HTTP status
 page, with `/markets.json`, `/cex.csv`, and `npm run cex:health`.
 
-`test/cex.test.js` expands the suite to 21 passing tests. The final live sweep
+`test/cex.test.js` expands the suite to 22 passing tests. The final live sweep
 attempted all 50; 43 had fresh books at completion. Availability failures are
 explicit and retried. See `CEX_MONITORING.md` for precise market coverage, external
 restrictions, source documentation, configuration, and validation limits.
@@ -17,6 +17,13 @@ restrictions, source documentation, configuration, and validation limits.
 Dependency additions: pinned ccxt 4.5.91 and patched undici 7.30.1 override;
 Node minimum is now 20.18.1. Audit: zero known vulnerabilities. This remains
 read-only and does not deploy Railway, fund accounts, or submit trades.
+
+While this follow-up was in progress, main advanced to `bd9441e` with Claude's
+PostgreSQL history and chart dashboard. Merged that main into this branch and
+preserved database initialization, DEX scan recording, shutdown flushing, HTML
+charts, history-backed CSV, and `/text`. The CEX watchlist is included in both
+the HTML dashboard's live section and the plain-text status. Added an integration
+test for database-enabled HTML, CSV, and text paths without a live database.
 
 User authorized improvements to the existing scanner and requested an identifiable
 handoff. This work is isolated on `codex/quote-integrity-and-simulation`, based on

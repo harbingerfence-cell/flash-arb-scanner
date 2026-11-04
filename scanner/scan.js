@@ -8,6 +8,7 @@ const {scanOnce,scoreRoutes,filterOutliers,median} = require('./core');
 const {validateCandidates} = require('./simulation');
 const {refreshTokens,startLive} = require('./live');
 const {writeSummary} = require('./summary');
+const db = require('./db');
 const fmt = wei => Number(ethers.formatEther(wei));
 const CSV_HEADER = 'time,block,token,size_eth,buy_on,buy_pool,sell_on,sell_pool,spread_pct,gross_eth,gas_eth,net_eth,net_usd,status,simulated_net_eth,simulated_gas_eth';
 function ensureCsv(p) {
@@ -59,8 +60,9 @@ async function main() {
   const started=Date.now();
   const stats={scans:0,errors:0,profitable:0,simulatedPositive:0,simulationFailed:0,firstBlock:0,lastBlock:0,bestNet:null,bestSpread:null,byRoute:{},byToken:{}};
   const monitor=createMonitor();
-  const finish=()=>{monitor.stop();writeSummary(stats,started);process.exit(0);};
+  const finish=async()=>{monitor.stop();writeSummary(stats,started);await db.flush().catch(()=>{});process.exit(0);};
   process.on('SIGINT',finish);process.on('SIGTERM',finish);
+  await db.initDb().catch(()=>console.error('History database unavailable'));
   startLive(provider,stats,started,monitor);
   if(monitor.config.enabled) monitor.start();
   await refreshTokens(provider);
@@ -85,6 +87,7 @@ async function main() {
       if (await provider.getBlockNumber()-res.blockNumber>cfg.MAX_QUOTE_AGE_BLOCKS)
         throw new Error('Stale scan; discard quotes');
       recordScan(stats,res);
+      db.recordScan(res);
       const top=res.routes[0];
       console.log(`#${res.blockNumber} ${top ? `QUOTE ${top.token} ${top.buyVenue}->${top.sellVenue} estimated ${fmt(top.netWei).toFixed(7)} ETH (${top.status})` : 'no comparable routes'} | ${((Date.now()-t0)/1000).toFixed(1)}s`);
     } catch(error) {
