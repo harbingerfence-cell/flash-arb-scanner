@@ -44,6 +44,7 @@ Use `git diff 6c60b905...codex/quote-integrity-and-simulation` to see the change
 - Rotated one-token scan with all venues/default sizes completed in 2.7 seconds,
   returning 210 routes at block 53490008. These are quotes, not profitable trades.
 - Dependency audit after update reported zero known vulnerabilities.
+- GitHub CI passed the scanner push tests and the existing contract fork-test job.
 
 ## Railway state and rollout
 
@@ -64,7 +65,9 @@ in this work, so simulation tests use a deterministic mocked RPC.
 
 ## Remaining work before live trading
 
-- Solidity and existing fork tests were not changed or run. Verify router ABIs,
+- Solidity and existing fork tests were not changed. The existing fork-test job
+  passed automatically in GitHub CI after this branch was pushed; no fork tests
+  were run locally. Verify router ABIs,
   addresses, lender liquidity/fees, and actual contract deployment on a pinned Base
   fork. Add contract expiry, safe token transfers, and per-leg output bounds with
   fork tests in a separately reviewed contract revision.
